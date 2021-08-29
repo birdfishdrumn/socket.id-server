@@ -1,8 +1,10 @@
+"use strict";
 var __spreadArray = (this && this.__spreadArray) || function (to, from) {
     for (var i = 0, il = from.length, j = to.length; i < il; i++, j++)
         to[j] = from[i];
     return to;
 };
+exports.__esModule = true;
 var express = require("express");
 var http = require("http");
 var uuidv4 = require("uuid").v4;
@@ -35,17 +37,21 @@ var io = require("socket.io")(server, {
         methods: ["GET", "POST"]
     }
 });
+// 送られてきたsocketを受信
 io.on("connection", function (socket) {
     console.log("user connected " + socket.id);
     //  onはデータを受信する処理
     // 第一引数はクライアントサイドで送信されたメソッド名
     // 第二引数は受け取ったデータに応じて処理を実行する
     socket.on("create-new-room", function (data) {
+        //新しい部屋を作成する処理
         createNewRoomHandler(data, socket);
     });
     socket.on("join-room", function (data) {
+        // 部屋に参加する処理
         joinRoomHandler(data, socket);
     });
+    //  部屋から退出する処理
     socket.on("disconnect", function () {
         disconnectHandler(socket);
     });
@@ -55,6 +61,7 @@ var createNewRoomHandler = function (data, socket) {
     console.log("host is creating room");
     console.log(data);
     var identity = data.identity;
+    // roomIdはランダムな数字で作成
     var roomId = uuidv4();
     console.log(roomId);
     // 新規ユーザーの作成
@@ -94,6 +101,7 @@ var joinRoomHandler = function (data, socket) {
     socket.join(roomId);
     // 新しいuserを参加させる処理
     connectedUsers = __spreadArray(__spreadArray([], connectedUsers), [newUser]);
+    // 既にあるデータの更新を送信する処理
     io.to(roomId).emit("room-update", { connectedUsers: room.connectedUsers });
 };
 var disconnectHandler = function (socket) {

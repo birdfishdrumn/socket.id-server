@@ -1,3 +1,4 @@
+import { Request,Response } from "express";
 const express = require("express")
 const http = require("http")
 const { v4: uuidv4 } = require("uuid")
@@ -9,16 +10,30 @@ const PORT = process.env.PORT || 5002
 
 const app = express()
 
+type User = {
+   identity:string
+    id: string
+    socketId:string
+    roomId:string
+}
 
+type newRoomData = {
+   identity:string
+}
+
+type JoinRoomData= {
+  identity: string
+  roomId:string
+}
 
 const server = http.createServer(app)
 
 app.use(cors())
 
-let connectedUsers = []
-let rooms = []
+let connectedUsers:User[] = []
+let rooms:any[] = []
 
-app.get("/api/room-exists/:roomId", (req, res) => {
+app.get("/api/room-exists/:roomId", (req:Request, res:Response) => {
   const { roomId } = req.params
   const room = rooms.find(room => room.id === roomId)
 
@@ -45,17 +60,17 @@ const io = require("socket.io")(server,{
 })
 
 // 送られてきたsocketを受信
-io.on("connection", (socket) => {
-  console.log(`user connected ${socket.id}`)
+io.on("connection", (socket:any) => {
+  console.log(`user connected userId ${socket.id}`)
   //  onはデータを受信する処理
   // 第一引数はクライアントサイドで送信されたメソッド名
   // 第二引数は受け取ったデータに応じて処理を実行する
-  socket.on("create-new-room", (data) => {
+  socket.on("create-new-room", (data:newRoomData) => {
     //新しい部屋を作成する処理
   createNewRoomHandler(data,socket)
   })
 
-  socket.on("join-room", (data) => {
+  socket.on("join-room", (data:JoinRoomData) => {
       // 部屋に参加する処理
   joinRoomHandler(data,socket)
   })
@@ -66,7 +81,7 @@ io.on("connection", (socket) => {
 })
 
 // 新しい部屋を作成する処理
-const createNewRoomHandler = (data,socket) => {
+const createNewRoomHandler = (data:newRoomData,socket:any) => {
   console.log("host is creating room")
   console.log(data)
   const { identity } = data
@@ -102,7 +117,7 @@ const createNewRoomHandler = (data,socket) => {
 
 }
 
-const joinRoomHandler = (data,socket) => {
+const joinRoomHandler = (data:JoinRoomData,socket:any) => {
   const { identity, roomId } = data
   const newUser = {
     identity,
@@ -125,13 +140,13 @@ const joinRoomHandler = (data,socket) => {
 
 }
 
-const disconnectHandler = (socket) => {
+const disconnectHandler = (socket:any) => {
   // 一致するユーザーを検索
   const user = connectedUsers.find((user) => user.socketId === socket.id)
 
   if (user) {
     const room = rooms.find(room => room.id === user.roomId)
-    room.connectedUsers = room.connectedUsers.filter(user => user.socketId !== socket.id)
+    room.connectedUsers = room.connectedUsers.filter((user:User) => user.socketId !== socket.id)
 
     socket.leave(user.roomId)
 
