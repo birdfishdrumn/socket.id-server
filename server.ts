@@ -134,7 +134,18 @@ const joinRoomHandler = (data:JoinRoomData,socket:any) => {
 
   socket.join(roomId)
   // 新しいuserを参加させる処理
-  connectedUsers = [...connectedUsers, newUser]
+  connectedUsers= [...connectedUsers, newUser]
+// 全てのユーザーに対してのpeerConnectionの準備をする処理
+  room.connectedUsers.forEach((user: User)=>{
+    if (user.socketId !== socket.id) {
+      const data = {
+        connectedUsers: socket.id
+      }
+
+      io.to(roomId).emit("conn-prepare",data)
+    }
+  })
+
   // 既にあるデータの更新を送信する処理
   io.to(roomId).emit("room-update",{connectedUsers: room.connectedUsers})
 
