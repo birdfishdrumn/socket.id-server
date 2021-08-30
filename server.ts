@@ -149,13 +149,14 @@ const joinRoomHandler = (data:JoinRoomData,socket:any) => {
   // 新しいuserを参加させる処理
   connectedUsers= [...connectedUsers, newUser]
 // 全てのユーザーに対してのpeerConnectionの準備をする処理
+  // 一番最初のpeerコネクション接続の処理
   room.connectedUsers.forEach((user: User)=>{
     if (user.socketId !== socket.id) {
       const data = {
-        connectedUsers: socket.id
+        connUserSocketId: socket.id
       }
 
-      io.to(roomId).emit("conn-prepare",data)
+      io.to(user.socketId).emit("conn-prepare",data)
     }
   })
 
@@ -189,12 +190,14 @@ const disconnectHandler = (socket:any) => {
 
 const signalingHandler = (data:SignalData, socket:any) => {
   const { connUserSocketId, signal } = data
+  console.log("data",data)
   const signalingData:SignalData= { signal, connUserSocketId: socket.id }
   io.to(connUserSocketId).emit("conn-signal",signalingData)
 }
 //  既に部屋に接続しているという情報
 const initializeConnectionHandler = (data:SignalData, socket:any) => {
   const { connUserSocketId } = data
+  console.log("user",connUserSocketId)
 
   const initData = { connUserSocketId: socket.id }
   io.to(connUserSocketId).emit("conn-init",initData)
