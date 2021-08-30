@@ -10,6 +10,11 @@ const PORT = process.env.PORT || 5002
 
 const app = express()
 
+type SignalData = {
+  signal: any,
+  connUserSocketId:string
+}
+
 type User = {
    identity:string
     id: string
@@ -77,6 +82,14 @@ io.on("connection", (socket:any) => {
   //  部屋から退出する処理
   socket.on("disconnect", () => {
     disconnectHandler(socket)
+  })
+
+   socket.on("conn-signal",(data:SignalData) => {
+    signalingHandler(data,socket)
+   })
+
+     socket.on("conn-init",(data:SignalData) => {
+    initializeConnectionHandler(data,socket)
   })
 })
 
@@ -171,6 +184,20 @@ const disconnectHandler = (socket:any) => {
     }
 
   }
+
+}
+
+const signalingHandler = (data:SignalData, socket:any) => {
+  const { connUserSocketId, signal } = data
+  const signalingData:SignalData= { signal, connUserSocketId: socket.id }
+  io.to(connUserSocketId).emit("conn-signal",signalingData)
+}
+//  既に部屋に接続しているという情報
+const initializeConnectionHandler = (data:SignalData, socket:any) => {
+  const { connUserSocketId } = data
+
+  const initData = { connUserSocketId: socket.id }
+  io.to(connUserSocketId).emit("conn-init",initData)
 }
 
 
